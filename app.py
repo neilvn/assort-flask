@@ -57,12 +57,12 @@ def make_call():
 
 @app.route('/handle-call', methods=['POST'])
 def handle_call():
-    """Webhook that Twilio calls when the call connects"""
+    '''Webhook that Twilio calls when the call connects'''
     response = VoiceResponse()
 
     gather = Gather(
         input='speech',          
-        action='/process_speech',
+        action=f'{request.url_root}process_speech',
         method='POST',           
         language='en-US',        
         speechTimeout='auto',    
