@@ -81,16 +81,44 @@ def handle_call():
 @app.route('/process-call', methods=["POST"])
 def process_call():
     logger.info('Processing call...')
+    
     speech_result = request.values.get('SpeechResult', '')
+    call_sid = request.values.get('CallSid', '')
     logger.info(f'Speech result: {speech_result}')
-
-    for curr_script in script:
-        response = VoiceResponse()
+    
+    current_question_index = int(request.values.get('question_index', 0))
+    
+    response = VoiceResponse()
+    
+    if current_question_index < len(script):
+        curr_script = script[current_question_index]
+        if speech_result and current_question_index > 0:
+            prev_question = script[current_question_index - 1]
+            logger.info(f"Answer to '{prev_question}': {speech_result}")
+        
         response.pause(length=1)
+        
         ai_query = get_ai_response(curr_script)
+        
         response.say(ai_query)
-
+        
+        gather = Gather(
+            input='speech',
+            action=f'/process-call?question_index={current_question_index + 1}',
+            method='POST',
+            speechTimeout='auto',
+            enhanced=True
+        )
+        
+        response.append(gather)
+        response.redirect(f'/process-call?question_index={current_question_index}')
+    else:
+        response.pause(length=1)
+        response.say("Thank you for answering all our questions. Have a great day!")
+        response.hangup()
+    
     return str(response)
+
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
