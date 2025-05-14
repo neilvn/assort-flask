@@ -1,10 +1,9 @@
 import os
 import json
 import logging
-import base64
 
 from flask import Flask, request, Response
-from twilio.twiml.voice_response import VoiceResponse, Start, Stream
+from twilio.twiml.voice_response import Gather, VoiceResponse, Start, Stream
 from twilio.rest import Client
 from flask_socketio import SocketIO, emit
 from dotenv import load_dotenv
@@ -19,9 +18,10 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 load_dotenv()
 
-TWILIO_ACCOUNT_SID = os.environ["TWILIO_ACCOUNT_SID"]
-TWILIO_AUTH_TOKEN = os.environ["TWILIO_AUTH_TOKEN"]
-TWILIO_PHONE_NUMBER = os.environ["TWILIO_PHONE_NUMBER"]
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+OPENAI_KEY = os.getenv("OPENAI_KEY")
 
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
@@ -30,6 +30,8 @@ active_calls = {}
 @app.route('/make-call', methods=['POST'])
 def make_call():
     """Endpoint to initiate a call using Twilio's API"""
+    logger.info("Initiating outgoing call")
+
     try:
         data = request.get_json()
         to_number = data.get('to_number')
@@ -55,23 +57,27 @@ def make_call():
 def handle_call():
     """Webhook that Twilio calls when the call connects"""
     response = VoiceResponse()
+
+    response.gather(speechTimeout="auto")
+    logger.info(response)
+    response.say("Thank you")
     
-    start = Start()
+    # start = Start()
     
-    stream = Stream(
-        url=f"wss://{request.host}/audio-stream",
-        track='both_tracks'
-    )
+    # stream = Stream(
+    #     url=f"wss://{request.host}/audio-stream",
+    #     track='both_tracks'
+    # )
     
-    stream.parameter(name='speechResult', value='true')
+    # stream.parameter(name='speechResult', value='true')
     
-    start.append(stream)
+    # start.append(stream)
     
-    response.append(start)
+    # response.append(start)
     
-    response.say("This call is being transcribed in real-time.")
+    # response.say("This call is being transcribed in real-time.")
     
-    response.pause(length=120)  # Keep connection for 2 minutes
+    # response.pause(length=120)  # Keep connection for 2 minutes
     
     return Response(str(response), mimetype='text/xml')
 
