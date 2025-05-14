@@ -6,3 +6,4 @@ python-dotenv==1.0.0
 
 # For WebSocket handling
 eventlet==0.33.3  # or gevent for production
+gunicorn==20.1.0
