@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from flask import Flask, request, Response
 from flask_socketio import SocketIO, emit
 from openai import get_ai_response
+from script import script
 from twilio.twiml.voice_response import Gather, VoiceResponse, Start, Stream
 from twilio.rest import Client
 
@@ -69,6 +70,7 @@ def handle_call():
         enhanced=True            
     )
 
+    gather.pause(length=3)
     gather.say("Hello, this is Assort Health")
     response.append(gather)
     response.gather(speechTimeout=4)
@@ -80,11 +82,15 @@ def handle_call():
 def process_call():
     logger.info('Processing call...')
     speech_result = request.values.get('SpeechResult', '')
-    response = VoiceResponse()
-    response.say(f"I heard you say: {speech_result}")
+    logger.info(f'Speech result: {speech_result}')
+
+    for curr_script in script:
+        response = VoiceResponse()
+        response.pause(length=1)
+        ai_query = get_ai_response(curr_script)
+        response.say(ai_query)
 
     return str(response)
-
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)

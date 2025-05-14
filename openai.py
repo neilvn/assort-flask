@@ -3,6 +3,7 @@ import requests
 import os
 
 from dotenv import load_dotenv
+from script import instructions
 
 load_dotenv()
 
@@ -16,10 +17,11 @@ HEADERS = {
 MODEL = "gpt-3.5-turbo"
 
 def get_ai_response(content):
-    data = {
-        "model": MODEL,
-        "messages": [{"role": "user", "content": content}]
-    }
+    messages = [{"role": "system", "content": instructions}]
+
+    messages.append({"role": "user", "content": content})
+
+    data = { "model": MODEL, "messages": messages }
 
     response = requests.post(
         "https://api.openai.com/v1/chat/completions",
@@ -31,5 +33,5 @@ def get_ai_response(content):
         result = response.json()
         return result['choices'][0]['message']['content']
     else:
-        logger.info(f"Error: {response.status_code}")
+        print(f"Error: {response.status_code}")
         return False
