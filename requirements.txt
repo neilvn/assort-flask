@@ -1,2 +1,8 @@
-Flask
-Gunicorn
+# Core dependencies
+Flask==2.3.3
+flask-socketio==5.3.6
+twilio==8.5.0
+python-dotenv==1.0.0
+
+# For WebSocket handling
+eventlet==0.33.3  # or gevent for production
