@@ -19,9 +19,9 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 load_dotenv()
 
-TWILIO_ACCOUNT_SID = os.environ("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.environ("TWILIO_AUTH_TOKEN")
-TWILIO_PHONE_NUMBER = os.environ("TWILIO_PHONE_NUMBER")
+TWILIO_ACCOUNT_SID = os.environ["TWILIO_ACCOUNT_SID"]
+TWILIO_AUTH_TOKEN = os.environ["TWILIO_AUTH_TOKEN"]
+TWILIO_PHONE_NUMBER = os.environ["TWILIO_PHONE_NUMBER"]
 
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
