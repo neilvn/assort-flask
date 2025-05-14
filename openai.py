@@ -2,7 +2,6 @@ import json
 import requests
 import os
 
-from app import logger
 from dotenv import load_dotenv
 
 load_dotenv()
