@@ -2,11 +2,12 @@ import os
 import json
 import logging
 
+from dotenv import load_dotenv
 from flask import Flask, request, Response
+from flask_socketio import SocketIO, emit
+from openai import get_ai_response
 from twilio.twiml.voice_response import Gather, VoiceResponse, Start, Stream
 from twilio.rest import Client
-from flask_socketio import SocketIO, emit
-from dotenv import load_dotenv
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -53,33 +54,33 @@ def make_call():
         logger.error(f"Error making call: {str(e)}")
         return {'error': str(e)}, 500
 
+
 @app.route('/handle-call', methods=['POST'])
 def handle_call():
     """Webhook that Twilio calls when the call connects"""
     response = VoiceResponse()
 
-    response.gather(speechTimeout="auto")
-    logger.info(response)
-    response.say("Thank you")
-    
-    # start = Start()
-    
-    # stream = Stream(
-    #     url=f"wss://{request.host}/audio-stream",
-    #     track='both_tracks'
-    # )
-    
-    # stream.parameter(name='speechResult', value='true')
-    
-    # start.append(stream)
-    
-    # response.append(start)
-    
-    # response.say("This call is being transcribed in real-time.")
-    
-    # response.pause(length=120)  # Keep connection for 2 minutes
+    gather = Gather(
+        input='speech',          
+        action='/process_speech',
+        method='POST',           
+        language='en-US',        
+        speechTimeout='auto',    
+        enhanced=True            
+    )
+
+    gather.say("Hello, this is Assort Health")
+    response.gather(speechTimeout=4)
     
     return Response(str(response), mimetype='text/xml')
+
+
+@app.route('/process-call', methods=["POST"])
+def process_call():
+    speech_result = request.values.get('SpeechResult', '')
+    response = VoiceResponse()
+    response.say(f"I heard you say: {speech_result}")
+
 
 @app.route('/call-status', methods=['POST'])
 def call_status():
@@ -93,6 +94,7 @@ def call_status():
     response = VoiceResponse()
     return Response(str(response), mimetype='text/xml')
 
+
 @app.route('/get-transcription/<call_sid>', methods=['GET'])
 def get_transcription(call_sid):
     """Endpoint to retrieve the current transcription for a call"""
@@ -105,15 +107,18 @@ def get_transcription(call_sid):
         'transcription': active_calls[call_sid]['transcription']
     }
 
+
 @socketio.on('connect')
 def handle_connect():
     """Handle WebSocket connection"""
     logger.info('WebSocket client connected')
 
+
 @socketio.on('disconnect')
 def handle_disconnect():
     """Handle WebSocket disconnection"""
     logger.info('WebSocket client disconnected')
+
 
 @socketio.on('message')
 def handle_message(message):
@@ -139,12 +144,14 @@ def handle_message(message):
     except Exception as e:
         logger.error(f"Error processing WebSocket message: {str(e)}")
 
+
 def process_media(data):
     """Process media data from the WebSocket"""
     call_sid = data.get('streamSid')
     payload = data.get('media', {}).get('payload')
     
     logger.debug(f"Received media chunk for call {call_sid}")
+
 
 def process_transcription(data):
     """Process transcription results from Twilio"""
